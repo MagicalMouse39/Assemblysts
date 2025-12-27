@@ -36,12 +36,15 @@ print:
 
 ; Println
 ; rsi: text
-; rdx: text length
 println:
     push rdi
     push rsi
     push rdx
 
+    mov rdi, rsi
+    call str_len
+
+    mov rdx, rax
     call print
 
     mov rsi, newline
@@ -74,7 +77,7 @@ exit:
     ret
 
 
-;# Conversion functions
+;# Utility functions
 
 ; Int to string
 ; rdi: buffer
@@ -115,6 +118,60 @@ int_to_str:
     pop r8
     pop rcx
     pop rdx
+    pop rsi
+    pop rdi
+    call str_reverse
+    ret
+
+; String length
+; rdi: buffer
+str_len:
+    push rdi
+
+    .loop:
+        cmp BYTE [rdi], 0
+        je .break
+        inc rdi
+        jmp .loop
+    .break:
+        mov rax, rdi
+        pop rdi
+        push rdi
+        sub rax, rdi
+
+    pop rdi
+    ret
+
+; String reverse
+; rdi: buffer
+str_reverse:
+    push rdi
+    push rsi
+    push rbx
+
+    call str_len
+
+    mov rsi, rdi
+    lea rdi, [rdi + rax]
+    dec rdi
+    ; rsi: buffer start
+    ; rdi: buffer end
+
+    .loop:
+        cmp rsi, rdi
+        jge .break
+
+        mov al, [rsi]
+        mov bl, [rdi]
+        mov [rdi], al
+        mov [rsi], bl
+
+        inc rsi
+        dec rdi
+        jmp .loop
+    .break:
+
+    pop rbx
     pop rsi
     pop rdi
     ret
@@ -202,8 +259,21 @@ main:
     call append_to
 
     pop rax
+    push rax
+    mov rdi, rax
+    mov rsi, 0x0123456789abcdef
+    call append_to
+
+    pop rax
     mov rdi, rax
     call last_node
+
+    mov rdi, buffer
+    mov rsi, 1234
+    call int_to_str
+
+    mov rsi, buffer
+    call println
     ret
 
 
