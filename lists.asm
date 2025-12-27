@@ -87,14 +87,35 @@ create_node:
     mov [rax], rdi
     ret
 
+; Last node
+; rdi: root
+last_node:
+    .loop:
+        cmp [rdi + 4], DWORD 0
+        je .break
+        mov rdi, [rdi + 4]
+        jmp .loop
+    .break:
+    mov rax, rdi
+    ret
 
-global _start
-_start:
+
+;# Main functions
+
+main:
     mov rsi, msg
     mov rdx, msg_len
     call println
 
-    mov rdi, 12
-    call create_node    
+    mov rdi, 0xaabbccdd
+    call create_node
 
+    mov rdi, rax
+    call last_node
+    ret
+
+
+global _start
+_start:
+    call main
     call exit
