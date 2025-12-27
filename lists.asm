@@ -16,7 +16,8 @@ section .data
     msg_len equ $ - msg
 
 section .bss
-
+    buffer resb 256
+    buffer_len equ $ - buffer
 
 section .text
 ;# Primitive functions
@@ -56,6 +57,47 @@ exit:
     mov rax, 60
     mov rdi, 0
     syscall
+    ret
+
+
+;# Conversion functions
+
+; Int to string
+; rdi: buffer
+; rsi: integer
+int_to_str:
+    push rdx
+    push r8
+    push r9
+    push rsi
+    mov rcx, rsi
+    xor rdx, rdx
+    xor r9, r9
+
+    .convert_loop:
+        mov rax, rcx
+        mov r8, 0x0a
+        xor edx, edx
+        idiv r8
+
+        add dl, 0x30
+        mov [rdi], dl
+        inc rdi
+        inc r9
+
+        mov rcx, rax
+
+        cmp rcx, 0x0
+        jg .convert_loop
+
+    mov [rdi], BYTE 0x0
+
+    mov rax, r9
+
+    pop rsi
+    pop r9
+    pop r8
+    pop rdx
     ret
 
 
