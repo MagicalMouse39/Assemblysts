@@ -1,4 +1,4 @@
-BITS 64
+bits 64
 
 struc node
     .value resd 1
