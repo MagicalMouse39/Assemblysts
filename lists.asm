@@ -1,7 +1,7 @@
 bits 64
 
 struc node
-    .value resd 1
+    .value resq 1
     .next resq 1
 endstruc
 
@@ -9,7 +9,7 @@ section .rodata
     newline db 13, 10
     newline_len equ $ - newline
 
-    node_len equ 12
+    node_len equ 16
 
 section .data
     msg db 'Prova'
@@ -90,26 +90,50 @@ create_node:
 ; Last node
 ; rdi: root
 last_node:
+    push rdi
+
     .loop:
-        cmp [rdi + 4], DWORD 0
+        cmp QWORD [rdi + 8], 0
         je .break
-        mov rdi, [rdi + 4]
+        mov rdi, [rdi + 8]
         jmp .loop
     .break:
     mov rax, rdi
+
+    pop rdi
+    ret
+
+; Append to
+; rdi: root
+; rsi: val
+append_to:
+    push rdi
+
+    call last_node
+    push rax
+
+    mov rdi, rsi
+    call create_node
+
+    pop rdi
+    mov [rdi + 8], rax
+
+    pop rdi
     ret
 
 
 ;# Main functions
 
 main:
-    mov rsi, msg
-    mov rdx, msg_len
-    call println
-
-    mov rdi, 0xaabbccdd
+    mov rdi, 0x8899aabbccddeeff
     call create_node
+    push rax
 
+    mov rdi, rax
+    mov rsi, 0x0011223344556677
+    call append_to
+
+    pop rax
     mov rdi, rax
     call last_node
     ret
