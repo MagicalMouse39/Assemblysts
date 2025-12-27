@@ -26,22 +26,32 @@ section .text
 ; rsi: text
 ; rdx: text length
 print:
+    push rdi
+
     mov rdi, 1
     call write
+
+    pop rdi
     ret
 
 ; Println
 ; rsi: text
 ; rdx: text length
 println:
-    call print
+    push rdi
     push rsi
     push rdx
+
+    call print
+
     mov rsi, newline
     mov rdx, newline_len
     call print
-    pop rsi
+
     pop rdx
+    pop rsi
+    pop rdi
+    ret
 
 ; Write
 ; rdi: file descriptor
@@ -54,9 +64,13 @@ write:
 
 ; Exit
 exit:
+    push rdi
+
     mov rax, 60
     mov rdi, 0
     syscall
+
+    pop rdi
     ret
 
 
@@ -66,10 +80,13 @@ exit:
 ; rdi: buffer
 ; rsi: integer
 int_to_str:
+    push rdi
+    push rsi
     push rdx
+    push rcx
     push r8
     push r9
-    push rsi
+
     mov rcx, rsi
     xor rdx, rdx
     xor r9, r9
@@ -94,10 +111,12 @@ int_to_str:
 
     mov rax, r9
 
-    pop rsi
     pop r9
     pop r8
+    pop rcx
     pop rdx
+    pop rsi
+    pop rdi
     ret
 
 
@@ -107,13 +126,18 @@ int_to_str:
 ; rdi: segment size
 malloc:
     push rdi
+
     xor rdi, rdi
     mov rax, 12
     syscall
+
     pop rdi
+    push rdi
     lea rdi, [rax + rdi]
     mov rax, 12
     syscall
+
+    pop rdi
     ret
 
 
@@ -123,10 +147,12 @@ malloc:
 ; rdi: node value
 create_node:
     push rdi
+
     mov rdi, node_len
     call malloc
     pop rdi
     mov [rax], rdi
+
     ret
 
 ; Last node
