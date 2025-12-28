@@ -227,7 +227,7 @@ last_node:
     .loop:
         cmp QWORD [rdi + 8], 0
         je .break
-        lea rdi, [rdi + 8]
+        mov rdi, [rdi + 8]
         jmp .loop
     .break:
     mov rax, rdi
@@ -264,6 +264,69 @@ append_to:
     pop rdi
     ret
 
+; Get at
+; rdi: root
+; rsi: index
+; rax -> node
+get_at:
+    push rsi
+    push rdi
+
+    .loop:
+        cmp QWORD rsi, 0
+        jle .break
+        mov rdi, [rdi + 8]
+        dec rsi
+        jmp .loop
+    .break:
+    mov rax, rdi
+
+    pop rdi
+    pop rsi
+    ret
+
+; Insert after
+; rdi: root
+; rsi: index
+; rdx: val
+; rax -> new node
+insert_after:
+    push rdi
+    push rsi
+
+    call get_at
+
+    mov rsi, [rax + 8]
+    push rax
+
+    mov rdi, rdx
+    call create_node
+
+    pop rdi
+    mov [rdi + 8], rax
+
+    mov [rax + 8], rsi
+
+    pop rsi
+    pop rdi
+    ret
+
+
+; Remove after
+; rdi: root
+; rsi: index
+remove_after:
+    push rdi
+    push rsi
+
+    call get_at
+    mov rdi, [rax + 8]
+    mov rdi, [rdi + 8]
+    mov [rax + 8], rdi
+
+    pop rsi
+    pop rdi
+    ret
 
 ;# Main functions
 
@@ -276,22 +339,43 @@ main:
     mov rsi, 105
     call append_to
 
-    pop rax
-    push rax
-    mov rdi, rax
+    pop rdi
+    push rdi
     mov rsi, 1000
     call append_to
 
-    pop rax
-    mov rdi, rax
-    call last_node
+    pop rdi
+    push rdi
+    mov rsi, 1
+    mov rdx, 39
+    call insert_after
 
-    mov rsi, rdi
+    pop rdi
+    push rdi
+    mov rsi, 2
+    call get_at
+
+    mov rsi, [rax]
     mov rdi, buffer
     call int_to_str
 
     mov rsi, buffer
     call println
+
+    pop rdi
+    mov rsi, 1
+    call remove_after
+
+    mov rsi, 2
+    call get_at
+
+    mov rsi, [rax]
+    mov rdi, buffer
+    call int_to_str
+
+    mov rsi, buffer
+    call println
+
     ret
 
 
