@@ -82,6 +82,7 @@ exit:
 ; Int to string
 ; rdi: buffer
 ; rsi: integer
+; rdi -> converted string
 int_to_str:
     push rdi
     push rsi
@@ -125,6 +126,7 @@ int_to_str:
 
 ; String length
 ; rdi: buffer
+; rax -> string length
 str_len:
     push rdi
 
@@ -144,6 +146,7 @@ str_len:
 
 ; String reverse
 ; rdi: buffer
+; rdi -> reversed string
 str_reverse:
     push rdi
     push rsi
@@ -202,6 +205,7 @@ malloc:
 
 ; Create node
 ; rdi: node value
+; rax -> node pointer
 create_node:
     push rdi
 
@@ -244,6 +248,7 @@ last_node:
 ; Append to
 ; rdi: root
 ; rsi: val
+; rax -> new node pointer
 append_to:
     push rdi
 
