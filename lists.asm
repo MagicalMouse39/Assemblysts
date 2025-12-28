@@ -1,26 +1,26 @@
 bits 64
 
 struc node
-    .value resq 1
-    .next resq 1
+    .value resq 0x01
+    .next resq 0x01
 endstruc
 
 section .rodata
-    newline db 13, 10
+    newline db 0x0d, 0x0a
     newline_len equ $ - newline
 
-    node_len equ 16
+    node_len equ 0x10
 
 section .data
     msg db 'Prova'
     msg_len equ $ - msg
 
 section .bss
-    buffer resb 256
+    buffer resb 0x100
     buffer_len equ $ - buffer
 
 section .text
-;# Primitive functions
+;# Primitive procedures
 
 ; Print
 ; rsi: text
@@ -28,7 +28,7 @@ section .text
 print:
     push rdi
 
-    mov rdi, 1
+    mov rdi, 0x01
     call write
 
     pop rdi
@@ -61,7 +61,7 @@ println:
 ; rsi: text
 ; rdx: text length
 write:
-    mov rax, 1
+    mov rax, 0x01
     syscall
     ret
 
@@ -69,15 +69,15 @@ write:
 exit:
     push rdi
 
-    mov rax, 60
-    mov rdi, 0
+    mov rax, 0x3c
+    mov rdi, 0x00
     syscall
 
     pop rdi
     ret
 
 
-;# Utility functions
+;# Utility procedures
 
 ; Int to string
 ; rdi: buffer
@@ -96,11 +96,13 @@ int_to_str:
     xor r9, r9
 
     .convert_loop:
+        ; Divide by 10
         mov rax, rcx
         mov r8, 0x0a
         xor edx, edx
         idiv r8
 
+        ; Add char '0' to the desired number
         add dl, 0x30
         mov [rdi], dl
         inc rdi
@@ -108,10 +110,11 @@ int_to_str:
 
         mov rcx, rax
 
-        cmp rcx, 0x0
+        cmp rcx, 0x00
         jg .convert_loop
 
-    mov [rdi], BYTE 0x0
+    ; Insert null byte as string termination
+    mov [rdi], BYTE 0x00
 
     mov rax, r9
 
@@ -130,8 +133,9 @@ int_to_str:
 str_len:
     push rdi
 
+    ; Loop until null byte, increment counter in rdi
     .loop:
-        cmp BYTE [rdi], 0
+        cmp BYTE [rdi], 0x00
         je .break
         inc rdi
         jmp .loop
@@ -160,10 +164,12 @@ str_reverse:
     ; rsi: buffer start
     ; rdi: buffer end
 
+    ; Loop with double index: incrementing from start and decrementing from end
     .loop:
         cmp rsi, rdi
         jge .break
 
+        ; Exchange places using al and bl as storage BYTE registries
         mov al, [rsi]
         mov bl, [rdi]
         mov [rdi], al
@@ -180,28 +186,30 @@ str_reverse:
     ret
 
 
-;# Memory functions
+;# Memory procedures
 
 ; Malloc
 ; rdi: segment size
 malloc:
     push rdi
 
+    ; First call to SYS_BRK with rdi = 0 to get memory base address
     xor rdi, rdi
-    mov rax, 12
+    mov rax, 0x0c
     syscall
 
+    ; Second call to SYS_BRK with desired space value in rdi
     pop rdi
     push rdi
     lea rdi, [rax + rdi]
-    mov rax, 12
+    mov rax, 0x0c
     syscall
 
     pop rdi
     ret
 
 
-;# List functions
+;# List procedures
 
 ; Create node
 ; rdi: node value
@@ -209,8 +217,11 @@ malloc:
 create_node:
     push rdi
 
+    ; Create node memory space
     mov rdi, node_len
     call malloc
+
+    ; Insert node value
     pop rdi
     mov [rax], rdi
 
@@ -224,16 +235,20 @@ last_node:
     push rsi
     push rdi
 
+    ; Loop until node->next = 0
     .loop:
-        cmp QWORD [rdi + 8], 0
+        cmp QWORD [rdi + 0x08], 0x00
         je .break
-        mov rdi, [rdi + 8]
+        ; node = node->next
+        mov rdi, [rdi + 0x08]
         jmp .loop
     .break:
     mov rax, rdi
 
     pop rsi
     push rax
+
+    ; (final addr - start addr) / node_len = list size
     sub rdi, rsi
     mov rax, rdi
     mov rsi, node_len
@@ -252,12 +267,15 @@ last_node:
 append_to:
     push rdi
 
+    ; Find last node and save index
     call last_node
     push rax
 
+    ; Create new node with required value
     mov rdi, rsi
     call create_node
 
+    ; Set last_node->next = new_node
     pop rdi
     mov [rdi + 8], rax
 
@@ -272,9 +290,11 @@ get_at:
     push rsi
     push rdi
 
+    ; Loop from rsi to zero
     .loop:
         cmp QWORD rsi, 0
         jle .break
+        ; node = node->next
         mov rdi, [rdi + 8]
         dec rsi
         jmp .loop
@@ -294,17 +314,22 @@ insert_after:
     push rdi
     push rsi
 
+    ; Get required node's address
     call get_at
 
+    ; Save required node's next
     mov rsi, [rax + 8]
     push rax
 
+    ; Create new node
     mov rdi, rdx
     call create_node
 
+    ; Set new_node->next = required_node->next
     pop rdi
     mov [rdi + 8], rax
 
+    ; Set required_node->next = new_node
     mov [rax + 8], rsi
 
     pop rsi
@@ -319,6 +344,7 @@ remove_after:
     push rdi
     push rsi
 
+    ; required_node->next = required_node->next->next;
     call get_at
     mov rdi, [rax + 8]
     mov rdi, [rdi + 8]
@@ -328,7 +354,7 @@ remove_after:
     pop rdi
     ret
 
-;# Main functions
+;# Main procedures
 
 main:
     mov rdi, 104
