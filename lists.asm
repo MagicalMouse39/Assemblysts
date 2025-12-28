@@ -250,18 +250,18 @@ append_to:
 ;# Main functions
 
 main:
-    mov rdi, 0x8899aabbccddeeff
+    mov rdi, 104
     call create_node
     push rax
 
     mov rdi, rax
-    mov rsi, 0x0011223344556677
+    mov rsi, 105
     call append_to
 
     pop rax
     push rax
     mov rdi, rax
-    mov rsi, 0x0123456789abcdef
+    mov rsi, 1000
     call append_to
 
     pop rax
@@ -269,7 +269,7 @@ main:
     call last_node
 
     mov rdi, buffer
-    mov rsi, 1234
+    mov rsi, [rax]
     call int_to_str
 
     mov rsi, buffer
