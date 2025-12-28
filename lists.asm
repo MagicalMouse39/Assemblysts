@@ -214,18 +214,31 @@ create_node:
 
 ; Last node
 ; rdi: root
+; rax -> last node
+; rdi -> list size
 last_node:
+    push rsi
     push rdi
 
     .loop:
         cmp QWORD [rdi + 8], 0
         je .break
-        mov rdi, [rdi + 8]
+        lea rdi, [rdi + 8]
         jmp .loop
     .break:
     mov rax, rdi
 
-    pop rdi
+    pop rsi
+    push rax
+    sub rdi, rsi
+    mov rax, rdi
+    mov rsi, node_len
+    div rsi
+    mov rdi, rax
+    inc rdi
+
+    pop rax
+    pop rsi
     ret
 
 ; Append to
@@ -268,8 +281,8 @@ main:
     mov rdi, rax
     call last_node
 
+    mov rsi, rdi
     mov rdi, buffer
-    mov rsi, [rax]
     call int_to_str
 
     mov rsi, buffer
